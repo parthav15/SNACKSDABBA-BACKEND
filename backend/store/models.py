@@ -33,8 +33,8 @@ class User(AbstractUser):
     is_customer = models.BooleanField('Is customer', default=False)
     is_email = models.BooleanField('Is email', default=False)
     is_staff = models.BooleanField('Is staff', default=False)
-    is_role = models.IntegerField(choices=ROLE, default=0)
-    login_by = models.IntegerField(choices=LOGIN_BY, default=1)
+    is_role = models.IntegerField(choices=ROLE, default=0, blank=True, null=True)
+    login_by = models.IntegerField(choices=LOGIN_BY, default=1, blank=True, null=True)
     password = models.CharField(max_length=255, blank=True, null=True)
     two_factor = models.BooleanField(default=False)
     profile_picture = models.ImageField(upload_to='profile_pictures', default="", blank=True, null=True)
@@ -49,6 +49,7 @@ class Category(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, default="", blank=True, null=True)
     description = models.TextField(default="", blank=True, null=True)
+    image = models.ImageField(upload_to='categories/', default="", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
@@ -62,7 +63,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     stock = models.IntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
-    image = models.ImageField(upload_to='products/', default="", blank=True, null=True)
+    image = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 

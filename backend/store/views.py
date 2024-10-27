@@ -36,7 +36,7 @@ def generate_random_password(length=8):
     
 @csrf_exempt
 def user_register(request):
-    if request.method == 'POST':
+    if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
@@ -175,3 +175,17 @@ def user_get_details(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=400)
+    
+@csrf_exempt
+def list_categories(request):
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    
+    try:
+        categories = Category.objects.all().values('id', 'name', 'description', 'image')
+        categories_list = list(categories)
+        
+        return JsonResponse({'success': True, 'categories': categories_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
