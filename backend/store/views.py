@@ -21,11 +21,20 @@ def jwt_decode(token):
     decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
     return decoded_token
 
-def auth_user(token):
+def auth_customer(token):
     decoded_token = jwt_decode(token)
     email = decoded_token['email']
-    obj = User.objects.filter(email=email).first()
-    if obj:
+    customer = User.objects.filter(email=email, is_customer=True).first()
+    if customer:
+        return True
+    else:
+        return False
+
+def auth_admin(token):
+    decoded_token = jwt_decode(token)
+    email = decoded_token['email']
+    admin = User.objects.filter(email=email, is_staff=True).first()
+    if admin:
         return True
     else:
         return False
@@ -141,7 +150,7 @@ def user_get_details(request):
             return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
         
         token = bearer.split()[1]
-        if not auth_user(token):
+        if not auth_customer(token):
             return JsonResponse({'success': False, 'message': 'Invalid token.'}, status=401)
         
         decoded_token = jwt_decode(token)
@@ -186,6 +195,28 @@ def list_categories(request):
         categories_list = list(categories)
         
         return JsonResponse({'success': True, 'categories': categories_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def list_products(request):
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        products = Product.objects.all().values('id', 'name', 'description', 'price', 'stock', 'category__name', 'image')
+        products_list = list(products)
+        
+        return JsonResponse({'success': True, 'products': products_list}, status=200)
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
