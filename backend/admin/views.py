@@ -99,10 +99,13 @@ def add_product(request):
         category_id = request.POST.get('category_id', '').strip()
         image = request.FILES.get('image')
         
-        required_fields = ['name', 'description', 'price', 'stock', 'category_id', 'image']
+        required_fields = ['name', 'description', 'price', 'stock', 'category_id']
         missing_fields = [field for field in required_fields if field not in request.POST]
         if missing_fields:
             return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
+
+        if not image:
+            return JsonResponse({'success': False, 'message': f'Missing required fields: image'}, status=400)
 
         try:
             category = Category.objects.get(id=category_id)
@@ -181,6 +184,28 @@ def delete_product(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
+@csrf_exempt
+def list_products(request):
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        products = Product.objects.all().values('id', 'name', 'description', 'price', 'stock', 'category__name', 'image')
+        products_list = list(products)
+        
+        return JsonResponse({'success': True, 'products': products_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
     
 ##################################>>>>>>>>Category Management API's<<<<<<<<<<<<<################################
 @csrf_exempt
@@ -202,8 +227,11 @@ def add_category(request):
         description = request.POST.get('description', '').strip()
         image = request.FILES.get('image')
         
-        if not name or not description or not image:
-            return JsonResponse({'success': False, 'message': 'Missing required fields.'}, status=400)
+        required_fields = ['name', 'description', 'image']
+        missing_fields = [field for field in required_fields if not locals()[field]]
+        
+        if missing_fields:
+            return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
         
         category = Category.objects.create(
             name=name,
@@ -214,7 +242,7 @@ def add_category(request):
         return JsonResponse({'success': True, 'message': 'Category added successfully.', 'category_id': category.id}, status=201)
     
     except Exception as e:
-        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)    
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
         
 @csrf_exempt
 def update_category(request):
@@ -267,7 +295,8 @@ def delete_category(request):
         if not auth_admin(token):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
-        category_id = request.DELETE.get('category_id', '').strip()
+        data = json.loads(request.body)
+        category_id = data.get('category_id', '')
         category = Category.objects.get(id=category_id)
         
         if not category:
@@ -278,4 +307,18 @@ def delete_category(request):
         return JsonResponse({'success': True, 'message': 'Category deleted successfully.'}, status=200)
     
     except Exception as e:
-        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)  
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def list_categories(request):
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    
+    try:
+        categories = Category.objects.all().values('id', 'name', 'description', 'image')
+        categories_list = list(categories)
+        
+        return JsonResponse({'success': True, 'categories': categories_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)

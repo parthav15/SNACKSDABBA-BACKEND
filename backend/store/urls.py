@@ -8,5 +8,6 @@ urlpatterns = [
     path('user_get_details/', views.user_get_details, name='user_get_details'),
     
     # Category URLs
-    path('category_list/', views.list_categories, name='list_categories'),
+
+    # Product URLs
 ]

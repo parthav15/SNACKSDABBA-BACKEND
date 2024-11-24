@@ -184,39 +184,3 @@ def user_get_details(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=400)
-    
-@csrf_exempt
-def list_categories(request):
-    if request.method != 'GET':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
-    
-    try:
-        categories = Category.objects.all().values('id', 'name', 'description', 'image')
-        categories_list = list(categories)
-        
-        return JsonResponse({'success': True, 'categories': categories_list}, status=200)
-    
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
-    
-@csrf_exempt
-def list_products(request):
-    if request.method != 'GET':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
-    
-    try:
-        bearer = request.headers.get('Authorization')
-        if not bearer:
-            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
-        
-        token = bearer.split()[1]
-        if not auth_admin(token):
-            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
-        
-        products = Product.objects.all().values('id', 'name', 'description', 'price', 'stock', 'category__name', 'image')
-        products_list = list(products)
-        
-        return JsonResponse({'success': True, 'products': products_list}, status=200)
-    
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
