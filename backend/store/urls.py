@@ -6,6 +6,7 @@ urlpatterns = [
     path('user_register/', views.user_register, name='register'),
     path('user_login/', views.user_login, name='login'),
     path('user_get_details/', views.user_get_details, name='user_get_details'),
+    path('user_edit/', views.user_edit, name='user_edit'),
     
     # Category URLs
 

@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.core.files.storage import default_storage
 
 from store.models import User
 
@@ -184,3 +185,95 @@ def user_get_details(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=400)
+    
+@csrf_exempt
+def user_edit(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        try:
+            user = User.objects.get(email__iexact=user_email)
+        except User.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'User not found'}, status=404)
+        
+        print(request.POST)
+        print(request.FILES)
+        
+        user.first_name = request.POST.get('first_name', user.first_name).strip()
+        user.last_name = request.POST.get('last_name', user.last_name).strip()
+        user.username = request.POST.get('username', user.username).strip()
+        user.phone_number = request.POST.get('phone_number', user.phone_number).strip()
+        user.dob = request.POST.get('dob', user.dob)
+        user.marital_status = request.POST.get('marital_status', user.marital_status).strip()
+        user.nationality = request.POST.get('nationality', user.nationality).strip()
+        user.gender = request.POST.get('gender', user.gender).strip()
+        user.country = request.POST.get('country', user.country).strip()
+        user.city = request.POST.get('city', user.city).strip()
+        user.address = request.POST.get('address', user.address).strip()
+        user.zip_code = request.POST.get('zip_code', user.zip_code).strip()
+        profile_picture = request.FILES.get('profile_picture')
+
+        if profile_picture:
+            user.profile_picture = profile_picture
+            user.save()
+            user.refresh_from_db()
+            print(user.profile_picture.url)
+        user.save()
+        
+        return JsonResponse({'success': True, 'message': 'User updated successfully.'}, status=200)
+ 
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def user_change_password(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        try:
+            user = User.objects.get(email__iexact=user_email)
+        except User.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
+        
+        old_password = request.POST.get('old_password')
+        new_password = request.POST.get('new_password')
+
+        if user.check_password(old_password):
+            user.password = make_password(new_password)
+            user.save()
+            return JsonResponse({'success': True, 'message': 'Password changed successfully.'}, status=200)
+        else:
+            return JsonResponse({'success': False, 'message': 'Incorrect old password.'}, status=400)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)

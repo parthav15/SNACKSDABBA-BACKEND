@@ -37,7 +37,7 @@ class User(AbstractUser):
     login_by = models.IntegerField(choices=LOGIN_BY, default=1, blank=True, null=True)
     password = models.CharField(max_length=255, blank=True, null=True)
     two_factor = models.BooleanField(default=False)
-    profile_picture = models.ImageField(upload_to='profile_pictures', default="", blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', default="", blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -61,9 +61,17 @@ class Product(models.Model):
     name = models.CharField(max_length=255, default="", blank=True, null=True)
     description = models.TextField(default="", blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    video_url = models.URLField(blank=True, null=True)
+    attributes = models.JSONField(default=dict, blank=True, null=True)
+    is_featured = models.BooleanField(default=False)
+    rating = models.FloatField(default=0.0, blank=True, null=True)
+    brand = models.CharField(max_length=255, default="", blank=True, null=True)
     stock = models.IntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     image = models.JSONField()
+    meta_keywords = models.TextField(blank=True, null=True)
+    meta_description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 

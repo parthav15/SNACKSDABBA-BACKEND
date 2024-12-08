@@ -97,15 +97,18 @@ def add_product(request):
         price = request.POST.get('price', '').strip()
         stock = request.POST.get('stock', '').strip()
         category_id = request.POST.get('category_id', '').strip()
-        image = request.FILES.get('image')
+        images = request.FILES.getlist('image')
         
         required_fields = ['name', 'description', 'price', 'stock', 'category_id']
         missing_fields = [field for field in required_fields if field not in request.POST]
         if missing_fields:
             return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
 
-        if not image:
-            return JsonResponse({'success': False, 'message': f'Missing required fields: image'}, status=400)
+        products_image_paths = []
+
+        for image in images:
+            image_path = default_storage.save(f'products/{image.name}', image)
+            products_image_paths.append(image_path)
 
         try:
             category = Category.objects.get(id=category_id)
@@ -118,7 +121,7 @@ def add_product(request):
             price=price,
             stock=stock,
             category=category,
-            image=image
+            image=products_image_paths
         )
         
         return JsonResponse({'success': True, 'message': 'Product added successfully.', 'product_id': product.id}, status=200)
@@ -151,7 +154,14 @@ def update_product(request):
         product.price = request.POST.get('price', product.price).strip()
         product.stock = request.POST.get('stock', product.stock).strip()
         product.category_id = request.POST.get('category_id', product.category_id).strip()
-        product.image = request.FILES.get('image', product.image)
+        images = request.FILES.getlist('image')
+        products_image_paths = []
+
+        if images:
+            for image in images:
+                image_path = default_storage.save(f'products/{image.name}', image)
+                products_image_paths.append(image_path)
+            product.image = products_image_paths
         product.save()
         
         return JsonResponse({'success': True, 'message': 'Product updated successfully.', 'product_id': product.id}, status=200)
