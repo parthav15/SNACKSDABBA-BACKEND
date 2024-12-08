@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 
-from store.views import jwt_encode, jwt_decode, auth_admin
+from store.user_views import jwt_encode, jwt_decode, auth_admin
 from store.models import User, Product, Category
 import json
 
@@ -196,8 +196,8 @@ def delete_product(request):
     
 @csrf_exempt
 def list_products(request):
-    if request.method != 'GET':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
         bearer = request.headers.get('Authorization')
@@ -208,7 +208,23 @@ def list_products(request):
         if not auth_admin(token):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
-        products = Product.objects.all().values('id', 'name', 'description', 'price', 'stock', 'category__name', 'image')
+        products = Product.objects.all().values(
+            'id', 
+            'name', 
+            'description', 
+            'price', 
+            'discount_price',
+            'stock', 
+            'category__name', 
+            'image',
+            'video_url',
+            'attributes',
+            'is_featured',
+            'rating',
+            'brand',
+            'meta_keywords',
+            'meta_description'
+        )
         products_list = list(products)
         
         return JsonResponse({'success': True, 'products': products_list}, status=200)
@@ -321,8 +337,8 @@ def delete_category(request):
     
 @csrf_exempt
 def list_categories(request):
-    if request.method != 'GET':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
         categories = Category.objects.all().values('id', 'name', 'description', 'image')
