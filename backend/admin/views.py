@@ -131,8 +131,8 @@ def add_product(request):
     
 @csrf_exempt
 def update_product(request):
-    if request.method != 'PUT':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use PUT.'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
 
     try:
         bearer = request.headers.get('Authorization')
@@ -144,7 +144,7 @@ def update_product(request):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
         try:
-            product_id = request.PUT.get('product_id', '').strip()
+            product_id = request.POST.get('product_id', '').strip()
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Product not found'}, status=404)
@@ -241,7 +241,6 @@ def add_category(request):
     
     try:
         bearer = request.headers.get('Authorization')
-        
         if not bearer:
             return JsonResponse({'success': False, 'message': 'Authentication Header is required.'}, status=401)
         
@@ -249,18 +248,23 @@ def add_category(request):
         if not auth_admin(token):
             return JsonResponse({'success': False, 'message': 'Invalid Token.'}, status=401)
         
-        name = request.POST.get('name', '').strip()
+        category_name = request.POST.get('category_name', '').strip()
         description = request.POST.get('description', '').strip()
         image = request.FILES.get('image')
-        
-        required_fields = ['name', 'description', 'image']
-        missing_fields = [field for field in required_fields if not locals()[field]]
+
+        missing_fields = []
+        if not category_name:
+            missing_fields.append('category_name')
+        if not description:
+            missing_fields.append('description')
+        if not image:
+            missing_fields.append('image')
         
         if missing_fields:
             return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
         
         category = Category.objects.create(
-            name=name,
+            name=category_name,
             description=description,
             image=image
         )
@@ -271,9 +275,9 @@ def add_category(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
         
 @csrf_exempt
-def update_category(request):
-    if request.method != 'PUT':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use PUT. '}, status=405)
+def update_category(request, category_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST. '}, status=405)
     
     try:
         bearer = request.headers.get('Authorization')
@@ -285,15 +289,14 @@ def update_category(request):
         if not auth_admin(token):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
-        category_id = request.PUT.get('category_id', '').strip()
         category = Category.objects.get(id=category_id)
         
         if not category:
             return JsonResponse({'success': False, 'message': 'Category not found.'}, status=404)
         
-        name = request.PUT.get('name', category.name).strip()
-        description = request.PUT.get('description', category.description).strip()
-        image = request.PUT.get('image', category.image)
+        name = request.POST.get('name', category.name).strip()
+        description = request.POST.get('description', category.description).strip()
+        image = request.POST.get('image', category.image)
         
         category.name = name
         category.description = description
