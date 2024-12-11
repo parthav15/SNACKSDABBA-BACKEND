@@ -95,11 +95,17 @@ def add_product(request):
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
         price = request.POST.get('price', '').strip()
+        discount_price = request.POST.get('discount_price', '').strip()
+        video_url = request.POST.get('video_url', '').strip()
+        attributes = request.POST.get('attributes', '').strip()
+        is_featured = request.POST.get('is_featured', False)
+        rating = request.POST.get('rating', 0.0)
+        brand = request.POST.get('brand', '').strip()
         stock = request.POST.get('stock', '').strip()
         category_id = request.POST.get('category_id', '').strip()
         images = request.FILES.getlist('image')
         
-        required_fields = ['name', 'description', 'price', 'stock', 'category_id']
+        required_fields = ['name', 'description', 'price', 'discount_price', 'video_url', 'attributes', 'is_featured', 'rating', 'brand', 'stock', 'category_id']
         missing_fields = [field for field in required_fields if field not in request.POST]
         if missing_fields:
             return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
@@ -119,6 +125,12 @@ def add_product(request):
             name=name,
             description=description,
             price=price,
+            discount_price=discount_price,
+            video_url=video_url,
+            attributes=attributes,
+            is_featured=is_featured,
+            rating=rating,
+            brand=brand,
             stock=stock,
             category=category,
             image=products_image_paths
@@ -133,7 +145,7 @@ def add_product(request):
 def update_product(request):
     if request.method != 'PUT':
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use PUT.'}, status=405)
-
+    
     try:
         bearer = request.headers.get('Authorization')
         if not bearer:
@@ -143,17 +155,28 @@ def update_product(request):
         if not auth_admin(token):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
+        required_fields = ['product_id', 'name', 'description', 'price', 'discount_price', 'video_url', 'attributes', 'is_featured', 'rating', 'brand', 'stock', 'category_id']
+        missing_fields = [field for field in required_fields if field not in request.PUT]
+        if missing_fields:
+            return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
+        
         try:
             product_id = request.PUT.get('product_id', '').strip()
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Product not found'}, status=404)
         
-        product.name = request.POST.get('name', product.name).strip()
-        product.description = request.POST.get('description', product.description).strip()
-        product.price = request.POST.get('price', product.price).strip()
-        product.stock = request.POST.get('stock', product.stock).strip()
-        product.category_id = request.POST.get('category_id', product.category_id).strip()
+        product.name = request.PUT.get('name', product.name).strip()
+        product.description = request.PUT.get('description', product.description).strip()
+        product.price = request.PUT.get('price', product.price).strip()
+        product.discount_price = request.PUT.get('discount_price', product.discount_price).strip()
+        product.video_url = request.PUT.get('video_url', product.video_url).strip()
+        product.attributes = request.PUT.get('attributes', product.attributes)
+        product.is_featured = request.PUT.get('is_featured', product.is_featured) == 'True'
+        product.rating = request.PUT.get('rating', product.rating)
+        product.brand = request.PUT.get('brand', product.brand).strip()
+        product.stock = request.PUT.get('stock', product.stock).strip()
+        product.category_id = request.PUT.get('category_id', product.category_id).strip()
         images = request.FILES.getlist('image')
         products_image_paths = []
 
