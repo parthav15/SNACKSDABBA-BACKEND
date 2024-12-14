@@ -68,6 +68,8 @@ def users_list(request):
                 'phone_number': user.phone_number,
                 'date_of_birth': user.dob,
                 'marital_status': user.marital_status,
+                'two_factor': user.two_factor,
+                'login_by' : user.login_by,
                 'date_joined': user.date_joined,
                 'last_login': user.last_login,
             })
@@ -98,15 +100,15 @@ def add_product(request):
         discount_price = request.POST.get('discount_price', '').strip()
         video_url = request.POST.get('video_url', '').strip()
         attributes = request.POST.get('attributes', '').strip()
-        is_featured = request.POST.get('is_featured', False)
-        rating = request.POST.get('rating', 0.0)
+        is_featured = request.POST.get('is_featured', 'false').strip().lower() == 'true'
+        rating = float(request.POST.get('rating', 0.0))
         brand = request.POST.get('brand', '').strip()
         stock = request.POST.get('stock', '').strip()
         category_id = request.POST.get('category_id', '').strip()
         images = request.FILES.getlist('image')
         
-        required_fields = ['name', 'description', 'price', 'discount_price', 'video_url', 'attributes', 'is_featured', 'rating', 'brand', 'stock', 'category_id']
-        missing_fields = [field for field in required_fields if field not in request.POST]
+        required_fields = ['name', 'description', 'price', 'stock', 'category_id']
+        missing_fields = [field for field in required_fields if not request.POST.get(field)]
         if missing_fields:
             return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
 
@@ -194,8 +196,8 @@ def update_product(request):
     
 @csrf_exempt
 def delete_product(request):
-    if request.method != 'DELETE':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use DELETE.'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
         bearer = request.headers.get('Authorization')
@@ -207,7 +209,7 @@ def delete_product(request):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
         try:
-            product_id = request.DELETE.get('product_id', '').strip()
+            product_id = request.POST.get('product_id', '').strip()
             product = Product.objects.get(id=product_id)
             product.delete()
             return JsonResponse({'success': True, 'message': 'Product deleted successfully.'}, status=200)
