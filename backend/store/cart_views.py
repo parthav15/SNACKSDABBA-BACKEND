@@ -99,17 +99,16 @@ def update_cart(request):
         
         user = User.objects.get(email__iexact=user_email)
 
-        if cart_id:
-            cart_id = request.POST.get('cart_id')
-        else:
+        cart_id = request.POST.get('cart_id')
+        if not cart_id:
             return JsonResponse({'success': False, 'message': 'Missing cart_id.'}, status=400)
         
         cart = Cart.objects.get(id=cart_id, user=user)
 
-        cart.modified_at = datetime.now()
+        cart.modified_at = datetime.datetime.now()
         cart.save()
 
-        return JsonResponse({'success': False, 'message': 'Cart Updated Successfully.'}, status=200)
+        return JsonResponse({'success': True, 'message': 'Cart Updated Successfully.'}, status=200)
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
