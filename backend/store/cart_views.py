@@ -36,7 +36,7 @@ def create_cart(request):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
         try:
-            user = User.DoesNotExist(email__iexact=user_email)
+            user = User.objects.get(email__iexact=user_email)
         except User.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
         
@@ -313,3 +313,46 @@ def get_cart_item(request):
         return JsonResponse({'success': True, 'message': 'Cart item retrieved successfully.', 'item': item}, status=200)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def update_item_quantity(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        cart = Cart.objects.get(user=user)
+
+        product_id = request.POST.get('product_id')
+        quantity = request.POST.get('quantity', 1)
+
+        if not product_id:
+            return JsonResponse({'success': False, 'message': 'Product ID is required.'}, status=400)
+        
+        try:
+            cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
+        except CartItem.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Item not found in the cart.'}, status=404)
+        
+        cart_item.quantity = quantity
+        cart_item.save()
+        
+        return JsonResponse({'success': True, 'message': 'Item quantity updated successfully.'}, status=200)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
