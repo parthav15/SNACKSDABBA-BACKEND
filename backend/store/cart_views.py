@@ -40,8 +40,12 @@ def create_cart(request):
         except User.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
         
-        cart = Cart.objects.create(user=user)
-        return JsonResponse({'success': True, 'message': 'Cart created successfully.', 'cart_id': cart.id}, status=201)
+        try:
+            cart = Cart.objects.get(user=user)
+            return JsonResponse({'success': True, 'message': 'Cart already exists.', 'cart_id': cart.id}, status=200)
+        except Cart.DoesNotExist:
+            cart = Cart.objects.create(user=user)
+            return JsonResponse({'success': True, 'message': 'Cart created successfully.', 'cart_id': cart.id}, status=201)
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
     
