@@ -346,7 +346,30 @@ def update_item_quantity(request):
         cart_item.quantity = quantity
         cart_item.save()
         
-        return JsonResponse({'success': True, 'message': 'Item quantity updated successfully.'}, status=200)
+        product = cart_item.product
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Item quantity updated successfully.',
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'description': product.description,
+                'price': product.price,
+                'discount_price': product.discount_price,
+                'stock': product.stock,
+                'category': product.category.name,
+                'image': product.image,
+                'video_url': product.video_url,
+                'attributes': product.attributes,
+                'is_featured': product.is_featured,
+                'rating': product.rating,
+                'brand': product.brand,
+                'meta_keywords': product.meta_keywords,
+                'meta_description': product.meta_description
+            },
+            'updated_quantity': cart_item.quantity
+        }, status=200)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
