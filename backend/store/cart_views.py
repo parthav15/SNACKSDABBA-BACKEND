@@ -213,7 +213,7 @@ def add_item_to_cart(request):
         except CartItem.DoesNotExist:
             CartItem.objects.create(cart=cart, product=product, quantity=int(quantity))
 
-        return JsonResponse({'success': True, 'message': 'Item added to cart successfully.'}, status=200)
+        return JsonResponse({'success': True, 'message': 'Item added to cart successfully.', 'product_name': product.name, 'quantity': cart_item.quantity}, status=200)
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
