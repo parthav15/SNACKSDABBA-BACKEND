@@ -156,7 +156,7 @@ def update_product(request):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
         required_fields = ['product_id', 'name', 'description', 'price', 'discount_price', 'video_url', 'attributes', 'is_featured', 'rating', 'brand', 'stock', 'category_id']
-        missing_fields = [field for field in required_fields if field not in request.PUT]
+        missing_fields = [field for field in required_fields if field not in request.POST]
         if missing_fields:
             return JsonResponse({'success': False, 'message': f'Missing required fields: {", ".join(missing_fields)}'}, status=400)
         
@@ -166,17 +166,17 @@ def update_product(request):
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Product not found'}, status=404)
         
-        product.name = request.PUT.get('name', product.name).strip()
-        product.description = request.PUT.get('description', product.description).strip()
-        product.price = request.PUT.get('price', product.price).strip()
-        product.discount_price = request.PUT.get('discount_price', product.discount_price).strip()
-        product.video_url = request.PUT.get('video_url', product.video_url).strip()
-        product.attributes = request.PUT.get('attributes', product.attributes)
-        product.is_featured = request.PUT.get('is_featured', product.is_featured) == 'True'
-        product.rating = request.PUT.get('rating', product.rating)
-        product.brand = request.PUT.get('brand', product.brand).strip()
-        product.stock = request.PUT.get('stock', product.stock).strip()
-        product.category_id = request.PUT.get('category_id', product.category_id).strip()
+        product.name = request.POST.get('name', product.name).strip()
+        product.description = request.POST.get('description', product.description).strip()
+        product.price = request.POST.get('price', product.price).strip()
+        product.discount_price = request.POST.get('discount_price', product.discount_price).strip()
+        product.video_url = request.POST.get('video_url', product.video_url).strip()
+        product.attributes = request.POST.get('attributes', product.attributes)
+        product.is_featured = request.POST.get('is_featured', product.is_featured) == 'True'
+        product.rating = request.POST.get('rating', product.rating)
+        product.brand = request.POST.get('brand', product.brand).strip()
+        product.stock = request.POST.get('stock', product.stock).strip()
+        product.category_id = request.POST.get('category_id', product.category_id).strip()
         images = request.FILES.getlist('image')
         products_image_paths = []
 

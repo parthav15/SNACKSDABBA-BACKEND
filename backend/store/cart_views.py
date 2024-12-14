@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 from django.db.models import Q
 
-from store.models import User, Product, Cart
+from store.models import User, Product, Cart, CartItem
 from store.user_views import jwt_encode, jwt_decode, auth_customer
 
 import string
@@ -173,5 +173,143 @@ def clear_cart(request):
         cart.cart_items.all().delete()
         
         return JsonResponse({'success': True, 'message': 'Cart cleared successfully.'}, status=200)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def add_item_to_cart(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        cart = Cart.objects.get(user=user)
+
+        product_id = request.POST.get('product_id')
+        quantity = request.POST.get('quantity', 1)
+
+        if not product_id:
+            return JsonResponse({'success': False, 'message': 'Product ID is required.'}, status=400)
+        
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+        
+        try:
+            cart_item = CartItem.objects.get(cart=cart, product=product)
+            cart_item.quantity += int(quantity)
+            cart_item.save()
+        except CartItem.DoesNotExist:
+            CartItem.objects.create(cart=cart, product=product, quantity=int(quantity))
+
+        return JsonResponse({'success': True, 'message': 'Item added to cart successfully.'}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def get_cart_items(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+        
+        cart = Cart.objects.get(user=user)
+        
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        items = []
+
+        for item in cart_items:
+            items.append({
+                'id': item.id,
+                'product_id': item.product.id,
+                'product_name': item.product.name,
+                'quantity': item.quantity,
+                'created_at': item.created_at,
+                'modified_at': item.modified_at
+            })
+
+        return JsonResponse({'success': True, 'message': 'Cart items retrieved successfully.', 'items': items}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def get_cart_item(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+        
+        cart = Cart.objects.get(user=user)
+        
+        product_id = request.POST.get('product_id')
+        
+        if not product_id:
+            return JsonResponse({'success': False, 'message': 'Product ID is required.'}, status=400)
+        
+        try:
+            cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
+        except CartItem.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Item not found in cart'}, status=404)
+        
+        item = {
+            'id': cart_item.id,
+            'product_id': cart_item.product.id,
+            'product_name': cart_item.product.name,
+            'quantity': cart_item.quantity,
+            'created_at': cart_item.created_at,
+            'modified_at': cart_item.modified_at
+        }
+        
+        return JsonResponse({'success': True, 'message': 'Cart item retrieved successfully.', 'item': item}, status=200)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
