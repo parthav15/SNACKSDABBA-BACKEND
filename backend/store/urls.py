@@ -1,5 +1,5 @@
 from django.urls import path
-from store.views import user_views, product_views, cart_views
+from store.views import user_views, product_views, cart_views, wishlist_views
 
 urlpatterns = [
     # User Management URLs
@@ -31,4 +31,9 @@ urlpatterns = [
     path('get_cart_items/', cart_views.get_cart_items, name='get_cart_items'),
     path('get_cart_item/', cart_views.get_cart_item, name='get_cart_item'),
     path('update_item_quantity/', cart_views.update_item_quantity, name='update_item_quantity'),
+
+    # Wishlist URLs
+    path('add_to_wishlist/', wishlist_views.add_to_wishlist, name='add_to_wishlist'),
+    path('remove_from_wishlist/', wishlist_views.remove_from_wishlist, name='remove_from_wishlist'),
+    path('get_wishlist_products/', wishlist_views.get_wishlist_products, name='get_wishlist_products'),
 ]

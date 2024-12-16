@@ -132,3 +132,53 @@ def remove_from_wishlist(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def get_wishlist_products(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid Token Data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid Token Data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        wishlist_prducts = Wishlist.objects.filter(user=user).values('product')
+
+        wishlist_products_list = []
+        for product in wishlist_prducts:
+            wishlist_products_list.append({
+                'id': product['product'],
+                'name': Product.objects.get(id=product['product']).name,
+                'description': Product.objects.get(id=product['product']).description,
+                'price': Product.objects.get(id=product['product']).price,
+                'discount_price': Product.objects.get(id=product['product']).discount_price,
+                'stock': Product.objects.get(id=product['product']).stock,
+                'category': Product.objects.get(id=product['product']).category.name,
+                'image': Product.objects.get(id=product['product']).image,
+                'video_url': Product.objects.get(id=product['product']).video_url,
+                'attributes': Product.objects.get(id=product['product']).attributes,
+                'is_featured': Product.objects.get(id=product['product']).is_featured,
+                'rating': Product.objects.get(id=product['product']).rating,
+                'brand': Product.objects.get(id=product['product']).brand,
+                'meta_keywords': Product.objects.get(id=product['product']).meta_keywords,
+                'meta_description': Product.objects.get(id=product['product']).meta_description
+            })
+        
+        return JsonResponse({'success': True, 'message': 'Wishlist products retrieved successfully.', 'products': wishlist_products_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
