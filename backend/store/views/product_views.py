@@ -174,11 +174,11 @@ def get_products_by_brand(request, brand_id):
     
 @csrf_exempt
 def search_product(request):
-    if request.method != 'GET':
-        return JsonResponse({'success': False, 'message': 'Invalid request method. Use GET.'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
 
     try:
-        search_query = request.GET.get('search_query')
+        search_query = request.POST.get('search_query')
         products = Product.objects.filter(Q(name__icontains=search_query) | Q(description__icontains=search_query))
 
         products_list = []
