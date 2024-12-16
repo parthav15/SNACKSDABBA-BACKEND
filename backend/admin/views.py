@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 
-from store.user_views import jwt_encode, jwt_decode, auth_admin
+from store.views.user_views import jwt_encode, jwt_decode, auth_admin
 from store.models import User, Product, Category
 import json
 

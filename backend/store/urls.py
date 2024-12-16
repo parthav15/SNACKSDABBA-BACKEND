@@ -1,5 +1,5 @@
 from django.urls import path
-from store import user_views, product_views, cart_views
+from store.views import user_views, product_views, cart_views
 
 urlpatterns = [
     # User Management URLs

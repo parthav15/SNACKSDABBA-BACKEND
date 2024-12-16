@@ -8,7 +8,7 @@ from django.core.files.storage import default_storage
 from django.db.models import Q
 
 from store.models import User, Product
-from store.user_views import jwt_encode, jwt_decode, auth_customer
+from store.views.user_views import jwt_encode, jwt_decode, auth_customer
 
 import string
 import random
