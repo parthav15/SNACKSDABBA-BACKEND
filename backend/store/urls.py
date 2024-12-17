@@ -1,5 +1,5 @@
 from django.urls import path
-from store.views import user_views, product_views, cart_views, wishlist_views
+from store.views import user_views, product_views, cart_views, wishlist_views, shippingaddress_views
 
 urlpatterns = [
     # User Management URLs
@@ -38,4 +38,11 @@ urlpatterns = [
     path('get_wishlist_products/', wishlist_views.get_wishlist_products, name='get_wishlist_products'),
     path('clear_wishlist/', wishlist_views.clear_wishlist, name='clear_wishlist'),
     path('wishlist_count/', wishlist_views.wislist_count, name='wishlist_count'),
+
+    # Shipping Address URLs
+    path('add_shipping_address/', shippingaddress_views.add_shipping_address, name='add_shipping_address'),
+    path('update_shipping_address/', shippingaddress_views.update_shipping_address, name='update_shipping_address'),
+    path('delete_shipping_address/', shippingaddress_views.delete_shipping_address, name='delete_shipping_address'),
+    path('get_shipping_address/', shippingaddress_views.get_shipping_address, name='get_shipping_address'),
+    path('list_shipping_address/', shippingaddress_views.list_shipping_address, name='list_shipping_address'),
 ]
