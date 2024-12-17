@@ -36,4 +36,6 @@ urlpatterns = [
     path('add_to_wishlist/', wishlist_views.add_to_wishlist, name='add_to_wishlist'),
     path('remove_from_wishlist/', wishlist_views.remove_from_wishlist, name='remove_from_wishlist'),
     path('get_wishlist_products/', wishlist_views.get_wishlist_products, name='get_wishlist_products'),
+    path('clear_wishlist/', wishlist_views.clear_wishlist, name='clear_wishlist'),
+    path('wishlist_count/', wishlist_views.wislist_count, name='wishlist_count'),
 ]

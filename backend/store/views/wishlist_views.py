@@ -182,3 +182,60 @@ def get_wishlist_products(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
 
+@csrf_exempt
+def clear_wishlist(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'sucess': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        Wishlist.objects.filter(user=user).delete()
+
+        return JsonResponse({'success': True, 'message': 'Wishlist cleared successfully.'}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def wislist_count(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'sucess': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        wishlist_count = Wishlist.objects.filter(user=user).count()
+
+        return JsonResponse({'success': True, 'message': 'Wishlist count retrieved successfully.', 'count': wishlist_count}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
