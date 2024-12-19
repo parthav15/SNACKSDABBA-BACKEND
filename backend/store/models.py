@@ -139,6 +139,7 @@ class Order(models.Model):
     tracking_number = models.CharField(max_length=255, blank=True, null=True)
     coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, blank=True, null=True)
     shipping_address = models.ForeignKey('ShippingAddress', on_delete=models.SET_NULL, null=True, blank=True)
+    billing_address = models.ForeignKey('BillingAddress', on_delete=models.SET_NULL, null=True, blank=True)
     order_notes = models.TextField(blank=True, null=True)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_gift = models.BooleanField(default=False)
@@ -179,6 +180,21 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return f"ShippingAddress {self.id} for {self.user.username}"
+    
+class BillingAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='billing_addresses')
+    phone_number = models.CharField(max_length=255, default="", blank=True, null=True)
+    address_line1 = models.CharField(max_length=255, default="", blank=True, null=True)
+    address_line2 = models.CharField(max_length=255, default="", blank=True, null=True)
+    city = models.CharField(max_length=255, default="", blank=True, null=True)
+    state = models.CharField(max_length=255, default="", blank=True, null=True)
+    country = models.CharField(max_length=255, default="", blank=True, null=True)
+    postal_code = models.CharField(max_length=255, default="", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"BillingAddress {self.id} for Order {self.order.id}"
     
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
