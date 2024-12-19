@@ -90,7 +90,20 @@ def update_billing_address(request):
                     billing_address.country = country
                     billing_address.save()
 
-                    return JsonResponse({'success': True, 'message': 'Billing address updated successfully.'}, status=200)
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Billing address updated successfully.',
+                        'billing_address': {
+                            'id': billing_address.id,
+                            'phone_number': billing_address.phone_number,
+                            'address_line1': billing_address.address_line1,
+                            'address_line2': billing_address.address_line2,
+                            'city': billing_address.city,
+                            'state': billing_address.state,
+                            'postal_code': billing_address.postal_code,
+                            'country': billing_address.country,
+                        }
+                    }, status=200)
                 else:
                     return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
             except ObjectDoesNotExist:
