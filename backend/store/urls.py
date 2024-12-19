@@ -1,5 +1,5 @@
 from django.urls import path
-from store.views import user_views, product_views, cart_views, wishlist_views, shippingaddress_views, billingaddress_views
+from store.views import user_views, product_views, cart_views, wishlist_views, shippingaddress_views, billingaddress_views, order_views
 
 urlpatterns = [
     # User Management URLs
@@ -52,4 +52,13 @@ urlpatterns = [
     path('delete_billing_address/', billingaddress_views.delete_billing_address, name='delete_billing_address'),
     path('get_billing_address/', billingaddress_views.get_billing_address, name='get_billing_address'),
     path('list_billing_address/', billingaddress_views.list_billing_address, name='list_billing_address'),
+
+    # Order URLs
+    path('create_order/', order_views.create_order, name='create_order'),
+    path('get_order_details/', order_views.get_order_details, name='get_order_details'),
+    path('add_order_item/', order_views.add_order_item, name='add_order_item'),
+    path('remove_order_item/', order_views.remove_order_item, name='remove_order_item'),
+    path('update_shipping_address_order/', order_views.update_shipping_address_order, name='update_shipping_address_order'),
+    path('update_billing_address_order/', order_views.update_billing_address_order, name='update_billing_address_order'),
+    path('list_orders/', order_views.list_orders, name='list_orders'),
 ]

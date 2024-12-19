@@ -112,9 +112,11 @@ class Order(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending'),
         ('Processing', 'Processing'),
+        ('In Transit', 'In Transit'),
         ('Shipped', 'Shipped'),
         ('Delivered', 'Delivered'),
         ('Cancelled', 'Cancelled'),
+        ('Refunded', 'Refunded'),
     )
 
     PAYMENT_STATUS_CHOICES = (
