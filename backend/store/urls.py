@@ -1,5 +1,5 @@
 from django.urls import path
-from store.views import user_views, product_views, cart_views, wishlist_views, shippingaddress_views, billingaddress_views, order_views
+from store.views import user_views, product_views, cart_views, wishlist_views, shippingaddress_views, billingaddress_views, order_views, category_views
 
 urlpatterns = [
     # User Management URLs
@@ -9,6 +9,7 @@ urlpatterns = [
     path('user_edit/', user_views.user_edit, name='user_edit'),
     
     # Category URLs
+    path('list_categories/', category_views.list_categories, name='list_categories'),
 
     # Product URLs
     path('search_products/', product_views.search_product, name='search_product'),
