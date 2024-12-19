@@ -49,6 +49,7 @@ urlpatterns = [
     # Billing Address URLs
     path('add_billing_address/', billingaddress_views.add_billing_address, name='add_billing_address'),
     path('update_billing_address/', billingaddress_views.update_billing_address, name='update_billing_address'),
+    path('delete_billing_address/', billingaddress_views.delete_billing_address, name='delete_billing_address'),
     path('get_billing_address/', billingaddress_views.get_billing_address, name='get_billing_address'),
     path('list_billing_address/', billingaddress_views.list_billing_address, name='list_billing_address'),
 ]
