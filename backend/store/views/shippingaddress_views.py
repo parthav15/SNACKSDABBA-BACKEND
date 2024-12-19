@@ -103,7 +103,7 @@ def update_shipping_address(request):
             return JsonResponse({'success': False, 'message': 'Shipping address ID is required.'}, status=400)
 
         try:
-            shipping_address = ShippingAddress.objects.get(id=shipping_address, user=user)
+            shipping_address = ShippingAddress.objects.get(id=shipping_address_id, user=user)
         except ShippingAddress.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Shipping Address not found.'}, status=404)
         
