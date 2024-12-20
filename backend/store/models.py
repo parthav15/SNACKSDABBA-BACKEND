@@ -229,3 +229,20 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s wishlist for {self.product.name}"
+
+class CarouselImage(models.Model):
+    image = models.ImageField(upload_to='carousel_images/')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255, default="", blank=True, null=True)
+    caption = models.TextField(default="", blank=True, null=True)
+    display_order = models.PositiveBigIntegerField(default=0)
+    is_active = models.BooleanField(default=False)
+    alt_text = models.CharField(max_length=255, default="", blank=True, null=True)
+    external_link = models.URLField(default="", blank=True, null=True)
+    hover_text = models.CharField(max_length=255, default="", blank=True, null=True)
+    click_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Carousel images for Product ID: {self.product.id}"

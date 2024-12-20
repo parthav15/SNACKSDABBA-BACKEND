@@ -5,9 +5,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 
 from store.views.user_views import jwt_encode, jwt_decode, auth_admin
-from store.models import User, Product, Category
+from store.models import User, Product, Category, CarouselImage
 import json
 
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+#######################>>>>>>>>>>>>>>>>>>>>>> Admin Management API's <<<<<<<<<<<<<<<<<<<<<<<<<#############################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
 @csrf_exempt
 def admin_login(request):
     if request.method != 'POST':
@@ -39,7 +42,9 @@ def admin_login(request):
         return JsonResponse({'success': False, 'message': 'Invalid email or password'}, status=400)
     
     
-##################################>>>>>>>>User Management API's<<<<<<<<<<<<<################################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+#######################>>>>>>>>>>>>>>>>>>>>>> User Management API's <<<<<<<<<<<<<<<<<<<<<<<<<##############################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
 @csrf_exempt
 def users_list(request):
     if request.method != 'POST':
@@ -79,7 +84,9 @@ def users_list(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
         
-##################################>>>>>>>>Product API's<<<<<<<<<<<<<################################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+#####################>>>>>>>>>>>>>>>>>>>>>> Product Management API's <<<<<<<<<<<<<<<<<<<<<<<<<############################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
 @csrf_exempt
 def add_product(request):
     if request.method != 'POST':
@@ -258,7 +265,9 @@ def list_products(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
     
-##################################>>>>>>>>Category Management API's<<<<<<<<<<<<<################################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+#####################>>>>>>>>>>>>>>>>>>>>>> Category Management API's <<<<<<<<<<<<<<<<<<<<<<<<<############################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
 @csrf_exempt
 def add_category(request):
     if request.method != 'POST':
@@ -373,6 +382,164 @@ def list_categories(request):
         categories_list = list(categories)
         
         return JsonResponse({'success': True, 'categories': categories_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+#####################>>>>>>>>>>>>>>>>>>>>>> Carousel Management API's <<<<<<<<<<<<<<<<<<<<<<<<<############################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+@csrf_exempt
+def add_carousel_image(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        product_id = request.POST.get('product_id')
+        if not product_id:
+            return JsonResponse({'success': False, 'message': 'Product ID is required.'}, status=400)
+        
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+        
+        image = request.FILES.get('image')
+        if not image:
+            return JsonResponse({'success': False, 'message': 'Image is required.'}, status=400)
+        
+        title = request.POST.get('title', '')
+        caption = request.POST.get('caption', '')
+        alt_text = request.POST.get('alt_text', '')
+        external_link = request.POST.get('external_link', '')
+        hover_text = request.POST.get('hover_text', '')
+
+        carousel_image = CarouselImage.objects.create(
+            product=product,
+            image=image,
+            title=title,
+            caption=caption,
+            alt_text=alt_text,
+            external_link=external_link,
+            hover_text=hover_text
+        )
+
+        return JsonResponse({'success': True, 'message': 'Carousel image added successfully.', 'carousel_image_id': carousel_image.id},status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def update_carousel_image(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        carousel_image_id = request.POST.get('carousel_image_id')
+        if not carousel_image_id:
+            return JsonResponse({'success': False, 'message': 'Carousel image ID is required.'}, status=400)
+        
+        try:
+            carousel_image = CarouselImage.objects.get(id=carousel_image_id)
+        except CarouselImage.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Carousel image not found.'}, status=404)
+        
+        if 'product_id' in request.POST:
+            product_id = request.POST.get('product_id')
+            if product_id:
+                try:
+                    product = Product.objects.get(id=product_id)
+                    carousel_image.product = product
+                except Product.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+        
+        if 'image' in request.FILES:
+            carousel_image.image = request.FILES.get('image')
+        
+        title = request.POST.get('title', '')
+        caption = request.POST.get('caption', '')
+        alt_text = request.POST.get('alt_text', '')
+        external_link = request.POST.get('external_link', '')
+        hover_text = request.POST.get('hover_text', '')
+
+        carousel_image.title = title
+        carousel_image.caption = caption
+        carousel_image.alt_text = alt_text
+        carousel_image.external_link = external_link
+        carousel_image.hover_text = hover_text
+        carousel_image.save()
+
+        return JsonResponse({'success': True, 'message': 'Carousel image updated successfully.', 'carousel_image_id': carousel_image.id},status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
+@csrf_exempt
+def delete_carousel_image(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        carousel_image_id = request.POST.get('carousel_image_id')
+        if not carousel_image_id:
+            return JsonResponse({'success': False, 'message': 'Carousel image ID is required.'}, status=400)
+        
+        try:
+            carousel_image = CarouselImage.objects.get(id=carousel_image_id)
+        except CarouselImage.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Carousel image not found.'}, status=404)
+        
+        carousel_image.delete()
+
+        return JsonResponse({'success': True, 'message': 'Carousel image deleted successfully.'},status=200)
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
