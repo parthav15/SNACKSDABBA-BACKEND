@@ -543,3 +543,62 @@ def delete_carousel_image(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def list_carousel_images(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        carousel_images = CarouselImage.objects.all().values('id', 'product__name', 'product__id', 'image', 'title', 'caption', 'alt_text', 'external_link', 'hover_text')
+        carousel_images_list = list(carousel_images)
+        
+        return JsonResponse({'success': True, 'carousel_images': carousel_images_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def list_carousel_images_order(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        carousel_images = CarouselImage.objects.all().order_by('display_order').values('id', 'product__name', 'product__id', 'image', 'title', 'caption', 'alt_text', 'external_link', 'hover_text')
+        carousel_images_list = list(carousel_images)
+
+        return JsonResponse({'success': True, 'carousel_images': carousel_images_list}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
+@csrf_exempt
+def get_carousel_image(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        carousel_image_id = request.POST.get('carousel_image_id')
+        if not carousel_image_id:
+            return JsonResponse({'success': False, 'message': 'Carousel Image ID is required.'}, status=400)
+        
+        carousel_image = CarouselImage.objects.get(id=carousel_image_id).values('id', 'product__name', 'product__id', 'image', 'title', 'caption', 'alt_text', 'external_link', 'hover_text')
+
+        return JsonResponse({'success': True, 'message': 'Carousel image retrieved successfully.', 'carousel_image': carousel_image}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def increment_carousel_image_click_count(request, carousel_image_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    try:
+        carousel_image = CarouselImage.objects.get(id=carousel_image_id)
+        carousel_image.click_count += 1
+        carousel_image.save()
+        return JsonResponse({'success': True, 'message': 'Click count incremented successfully.'}, status=200)
+    except CarouselImage.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Carousel image not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)

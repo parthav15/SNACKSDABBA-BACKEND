@@ -18,4 +18,13 @@ urlpatterns = [
     path('update_product/', views.update_product, name='update_product'),
     path('delete_product/', views.delete_product, name='delete_product'),
     path('product_list/', views.list_products, name='list_products'),
+
+    # Carousel Images Management URLs
+    path('add_carousel_image/', views.add_carousel_image, name='add_carousel_image'),
+    path('update_carousel_image/', views.update_carousel_image, name='update_carousel_image'),
+    path('delete_carousel_image/', views.delete_carousel_image, name='delete_carousel_image'),
+    path('list_carousel_images/', views.list_carousel_images, name='list_carousel_images'),
+    path('list_carousel_images_order/', views.list_carousel_images_order, name='list_carousel_images_order'),
+    path('get_carousel_image/', views.get_carousel_image, name='get_carousel_image'),
+    path('increment_carousel_image_click_count/<int:carousel_image_id>', views.increment_carousel_image_click_count, name='increment_carousel_image_click_count'),
 ]
