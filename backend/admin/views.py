@@ -412,13 +412,12 @@ def add_carousel_image(request):
         user = User.objects.get(email__iexact=user_email)
 
         product_id = request.POST.get('product_id')
-        if not product_id:
-            return JsonResponse({'success': False, 'message': 'Product ID is required.'}, status=400)
-        
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+        product = None
+        if product_id:
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
         
         image = request.FILES.get('image')
         if not image:
@@ -484,7 +483,9 @@ def update_carousel_image(request):
                     carousel_image.product = product
                 except Product.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
-        
+        else:
+            carousel_image.product = None
+
         if 'image' in request.FILES:
             carousel_image.image = request.FILES.get('image')
         
@@ -600,5 +601,35 @@ def increment_carousel_image_click_count(request, carousel_image_id):
         return JsonResponse({'success': True, 'message': 'Click count incremented successfully.'}, status=200)
     except CarouselImage.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Carousel image not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+########################>>>>>>>>>>>>>>>>>>>>>> Order Management API's <<<<<<<<<<<<<<<<<<<<<<<<<############################
+##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
+
+@csrf_exempt
+def list_orders(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        orders = Order.objects.all().values(
+            'id',
+            'user__first_name',
+            'user__last_name',
+            'total_price',
+            'discount_amount',
+            'is_gift',
+            'status',
+            'payment_status',
+            'payment_method',
+            'created_at'
+            )
+        
+        orders_list = list(orders)
+        
+        return JsonResponse({'success': True, 'message': 'Orders retrieved successfully.', 'orders': orders_list}, status=200)
+    
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)

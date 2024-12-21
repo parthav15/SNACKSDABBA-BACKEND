@@ -27,4 +27,7 @@ urlpatterns = [
     path('list_carousel_images_order/', views.list_carousel_images_order, name='list_carousel_images_order'),
     path('get_carousel_image/', views.get_carousel_image, name='get_carousel_image'),
     path('increment_carousel_image_click_count/<int:carousel_image_id>', views.increment_carousel_image_click_count, name='increment_carousel_image_click_count'),
+    
+    # Order Management URLs
+    path('list_orders/', views.list_orders, name='list_orders'),
 ]
