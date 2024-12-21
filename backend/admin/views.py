@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 
 from store.views.user_views import jwt_encode, jwt_decode, auth_admin
-from store.models import User, Product, Category, CarouselImage
+from store.models import User, Product, Category, CarouselImage, Order
 import json
 
 ##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
