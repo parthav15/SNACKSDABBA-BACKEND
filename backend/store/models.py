@@ -136,6 +136,7 @@ class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    payment = models.OneToOneField('Payment', on_delete=models.SET_NULL, null=True, blank=True, related_name='order_payment')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='Not Paid')
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, blank=True, null=True)
     tracking_number = models.CharField(max_length=255, blank=True, null=True)
@@ -200,7 +201,7 @@ class BillingAddress(models.Model):
     
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     status = models.CharField(max_length=20)
     razorpay_payment_id = models.CharField(max_length=255, default="", blank=True, null=True)

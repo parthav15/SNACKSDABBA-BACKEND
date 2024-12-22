@@ -644,7 +644,7 @@ def list_orders(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
 @csrf_exempt
-def order_detail(request, order_id):
+def order_detail(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
@@ -657,6 +657,10 @@ def order_detail(request, order_id):
         token = bearer.split()[1]
         if not auth_admin(token):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        order_id = request.POST.get('order_id')
+        if not order_id:
+            return JsonResponse({'success': False, 'message': 'Order ID is required.'}, status=400)
         
         order = Order.objects.get(id=order_id)
 
