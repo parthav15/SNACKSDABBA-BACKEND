@@ -120,18 +120,6 @@ def user_detail(request):
             return JsonResponse({'success': False, 'message': 'User ID is required.'}, status=400)
         
         user = User.objects.get(id=user_id)
-        
-        orders = Order.objects.filter(user=user)
-
-        cart = Cart.objects.get(user=user)
-
-        cart_items = CartItem.objects.filter(cart=cart)
-
-        shipping_addresses = ShippingAddress.objects.filter(user=user)
-
-        billing_addresses = BillingAddress.objects.filter(user=user)
-
-        reviews = Review.objects.filter(user=user)
 
         response_data = {
             "user": {
@@ -193,7 +181,7 @@ def user_detail(request):
                     ],
                     "created_at": order.created_at,
                 }
-                for order in orders
+                for order in user.orders.all()
             ],
             "cart": {
                 "id": user.carts.first().id if user.carts.exists() else None,
@@ -252,10 +240,10 @@ def user_detail(request):
             ],
         }
 
-        return JsonResponse(response_data, status=200)
+        return JsonResponse({'success': True, 'message': 'User details fetched successfully', 'user_details': response_data}, status=200)
 
     except Exception as e:
-        return JsonResponse({"error": "Something went wrong", "details": str(e)}, status=400)
+        return JsonResponse({"success": False, "message": f'Error: {str(e)}'}, status=400)
     
         
 ##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
