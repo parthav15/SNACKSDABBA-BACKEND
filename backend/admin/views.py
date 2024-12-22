@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 
 from store.views.user_views import jwt_encode, jwt_decode, auth_admin
-from store.models import User, Product, Category, CarouselImage, Order
+from store.models import User, Product, Category, CarouselImage, Order, Cart, CartItem, ShippingAddress, BillingAddress, Review
 import json
 
 ##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################
@@ -82,6 +82,180 @@ def users_list(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
+@csrf_exempt
+def user_detail(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user_id = request.POST.get('user_id')
+        if not user_id:
+            return JsonResponse({'success': False, 'message': 'User ID is required.'}, status=400)
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
+@csrf_exempt
+def user_detail(request):
+    try:
+        bearer = request.headers.get('Authorization')
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user_id = request.POST.get('user_id')
+        if not user_id:
+            return JsonResponse({'success': False, 'message': 'User ID is required.'}, status=400)
+        
+        user = User.objects.get(id=user_id)
+        
+        orders = Order.objects.filter(user=user)
+
+        cart = Cart.objects.get(user=user)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        shipping_addresses = ShippingAddress.objects.filter(user=user)
+
+        billing_addresses = BillingAddress.objects.filter(user=user)
+
+        reviews = Review.objects.filter(user=user)
+
+        response_data = {
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "username": user.username,
+                "phone_number": user.phone_number,
+                "dob": user.dob,
+                "marital_status": user.marital_status,
+                "nationality": user.nationality,
+                "gender": user.gender,
+                "country": user.country,
+                "city": user.city,
+                "address": user.address,
+                "zip_code": user.zip_code,
+                "is_admin": user.is_admin,
+                "is_customer": user.is_customer,
+                "is_email": user.is_email,
+                "is_staff": user.is_staff,
+                "is_role": user.get_is_role_display(),
+                "login_by": user.get_login_by_display(),
+                "two_factor": user.two_factor,
+                "profile_picture": user.profile_picture.url if user.profile_picture else None,
+            },
+            "orders": [
+                {
+                    "id": order.id,
+                    "total_price": order.total_price,
+                    "status": order.status,
+                    "payment_status": order.payment_status,
+                    "payment_method": order.payment_method,
+                    "tracking_number": order.tracking_number,
+                    "coupon": {
+                        "id": order.coupon.id,
+                        "discount_amount": order.coupon.discount_amount,
+                    } if order.coupon else None,
+                    "shipping_address": {
+                        "id": order.shipping_address.id,
+                        "address_line1": order.shipping_address.address_line1,
+                        "city": order.shipping_address.city,
+                        "country": order.shipping_address.country,
+                    } if order.shipping_address else None,
+                    "billing_address": {
+                        "id": order.billing_address.id,
+                        "address_line1": order.billing_address.address_line1,
+                        "city": order.billing_address.city,
+                        "country": order.billing_address.country,
+                    } if order.billing_address else None,
+                    "order_items": [
+                        {
+                            "id": item.id,
+                            "product": item.product.name,
+                            "quantity": item.quantity,
+                            "subtotal": item.subtotal,
+                        }
+                        for item in order.order_items.all()
+                    ],
+                    "created_at": order.created_at,
+                }
+                for order in orders
+            ],
+            "cart": {
+                "id": user.carts.first().id if user.carts.exists() else None,
+                "items": [
+                    {
+                        "id": item.id,
+                        "product": item.product.name,
+                        "quantity": item.quantity,
+                    }
+                    for item in user.carts.first().cart_items.all()
+                ] if user.carts.exists() else [],
+            },
+            "shipping_addresses": [
+                {
+                    "id": address.id,
+                    "phone_number": address.phone_number,
+                    "address_line1": address.address_line1,
+                    "city": address.city,
+                    "state": address.state,
+                    "country": address.country,
+                }
+                for address in user.shipping_addresses.all()
+            ],
+            "billing_addresses": [
+                {
+                    "id": address.id,
+                    "phone_number": address.phone_number,
+                    "address_line1": address.address_line1,
+                    "city": address.city,
+                    "state": address.state,
+                    "country": address.country,
+                }
+                for address in user.billing_addresses.all()
+            ],
+            "wishlist": [
+                {
+                    "product": {
+                        "id": wishlist_item.product.id,
+                        "name": wishlist_item.product.name,
+                        "price": wishlist_item.product.price,
+                        "discount_price": wishlist_item.product.discount_price,
+                    },
+                    "added_at": wishlist_item.added_at,
+                }
+                for wishlist_item in user.wishlist_set.all()
+            ],
+            "reviews": [
+                {
+                    "id": review.id,
+                    "product": review.product.name,
+                    "rating": review.rating,
+                    "comment": review.comment,
+                    "created_at": review.created_at,
+                }
+                for review in user.reviews.all()
+            ],
+        }
+
+        return JsonResponse(response_data, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": "Something went wrong", "details": str(e)}, status=400)
     
         
 ##################################>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<##################################

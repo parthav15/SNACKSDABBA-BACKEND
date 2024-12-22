@@ -6,6 +6,7 @@ urlpatterns = [
     
     # User management URLs
     path('users_list/', views.users_list, name='users_list'),
+    path('user_detail/', views.user_detail, name='user_detail'),
     
     # Category Management URLs
     path('add_category/', views.add_category, name='add_category'),
