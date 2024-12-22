@@ -642,3 +642,97 @@ def list_orders(request):
     
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def order_detail(request, order_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authorization header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        order = Order.objects.get(id=order_id)
+
+        response_data = {
+            'success': True,
+            'order_id': order.id,
+            'user': {
+                'id': order.user.id,
+                'email': order.user.email,
+                'first_name': order.user.first_name,
+                'last_name': order.user.last_name,
+                'phone_number': order.user.phone_number,
+            },
+            'total_price': str(order.total_price),
+            'status': order.status,
+            'payment_status': order.payment_status,
+            'payment_method': order.payment_method,
+            'tracking_number': order.tracking_number,
+            'created_at': order.created_at.isoformat(),
+            'modified_at': order.modified_at.isoformat(),
+            'shipping_address': {
+                'id': order.shipping_address.id,
+                'phone_number': order.shipping_address.phone_number,
+                'address_line1': order.shipping_address.address_line1,
+                'address_line2': order.shipping_address.address_line2,
+                'city': order.shipping_address.city,
+                'state': order.shipping_address.state,
+                'country': order.shipping_address.country,
+                'postal_code': order.shipping_address.postal_code,
+            },
+            'billing_address': {
+                'id': order.billing_address.id,
+                'phone_number': order.billing_address.phone_number,
+                'address_line1': order.billing_address.address_line1,
+                'address_line2': order.billing_address.address_line2,
+                'city': order.billing_address.city,
+                'state': order.billing_address.state,
+                'country': order.billing_address.country,
+                'postal_code': order.billing_address.postal_code,
+            },
+            'order_items': [{
+                'id': item.id,
+                'product': {
+                    'id': item.product.id,
+                    'name': item.product.name,
+                    'price': str(item.product.price),
+                    'discount_price': str(item.product.discount_price),
+                    'stock': item.product.stock,
+                    'image': item.product.image,
+                },
+                'quantity': item.quantity,
+                'price_at_purchase': str(item.price_at_purchase),
+                'subtotal': str(item.subtotal),
+            } for item in order.order_items.all()],
+            'is_gift': order.is_gift,
+            'gift_message': order.gift_message,
+            'discount_amount': str(order.discount_amount),
+            'coupon': {
+                'id': order.coupon.id if order.coupon else None,
+                'discount_amount': str(order.coupon.discount_amount) if order.coupon else None,
+                'valid_from': order.coupon.valid_from.isoformat() if order.coupon else None,
+                'valid_until': order.coupon.valid_until.isoformat() if order.coupon else None,
+            },
+            'payment': {
+                'amount': str(order.payment.amount) if order.payment else None,
+                'status': order.payment.status if order.payment else None,
+                'razorpay_payment_id': order.payment.razorpay_payment_id if order.payment else None,
+                'razorpay_order_id': order.payment.razorpay_order_id if order.payment else None,
+                'razorpay_signature': order.payment.razorpay_signature if order.payment else None,
+            }
+        }
+
+        return JsonResponse({'success': True, 'message': 'Order data retrieved successfully', 'response_data': response_data}, status=200)
+    
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Order not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+

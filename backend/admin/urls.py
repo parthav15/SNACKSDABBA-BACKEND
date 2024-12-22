@@ -30,4 +30,5 @@ urlpatterns = [
     
     # Order Management URLs
     path('list_orders/', views.list_orders, name='list_orders'),
+    path('order_detail/<int:order_id>', views.order_detail, name='order_detail'),
 ]
