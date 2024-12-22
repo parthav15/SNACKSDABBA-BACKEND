@@ -36,8 +36,10 @@ def create_order(request):
             return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
         
         user = User.objects.get(email__iexact=user_email)
+        
+        cart = Cart.objects.get(user=user)
 
-        cart_items = CartItem.objects.filter(user=user)
+        cart_items = CartItem.objects.filter(cart=cart)
         if not cart_items.exists():
             return JsonResponse({'success': False, 'message': 'Cart is empty.'}, status=400)
         
@@ -55,13 +57,14 @@ def create_order(request):
             return JsonResponse({'success': False, 'message': 'Billing address ID is required.'}, status=400)
         
         try:
-            billing_address = ShippingAddress.objects.get(id=billing_address_id)
+            billing_address = BillingAddress.objects.get(id=billing_address_id)
         except ShippingAddress.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Billing address not found.'}, status=404)
         
         is_gift = request.POST.get('is_gift', False)
-        if is_gift not in [True, False]:
+        if is_gift not in [True, False, 'True', 'False']:
             return JsonResponse({'success': False, 'message': 'Invalid gift status.'}, status=400)
+        is_gift = is_gift == True or is_gift == 'True'
         
         gift_message = request.POST.get('gift_message', '')
         
@@ -85,7 +88,46 @@ def create_order(request):
             order_items.append(order_item)
             cart_item.delete()
 
-        return JsonResponse({'success': True, 'message': 'Order created successfully.', 'order_id': order.id, 'is_gift': order.is_gift, 'gift_message': order.gift_message}, status=200)
+        response_data = {
+            'success': True,
+            'message': 'Order created successfully.',
+            'order_id': order.id,
+            'is_gift': order.is_gift,
+            'gift_message': order.gift_message,
+            'shipping_address': {
+                'id': order.shipping_address.id,
+                'phone_number': order.shipping_address.phone_number,
+                'address_line1': order.shipping_address.address_line1,
+                'address_line2': order.shipping_address.address_line2,
+                'city': order.shipping_address.city,
+                'state': order.shipping_address.state,
+                'country': order.shipping_address.country,
+                'postal_code': order.shipping_address.postal_code,
+            },
+            'billing_address': {
+                'id': order.billing_address.id,
+                'phone_number': order.billing_address.phone_number,
+                'address_line1': order.billing_address.address_line1,
+                'address_line2': order.billing_address.address_line2,
+                'city': order.billing_address.city,
+                'state': order.billing_address.state,
+                'country': order.billing_address.country,
+                'postal_code': order.billing_address.postal_code,
+            },
+            'order_items': [{
+                'id': item.id,
+                'product': {
+                    'id': item.product.id,
+                    'name': item.product.name,
+                    'price': item.product.price,
+                },
+                'quantity': item.quantity,
+                'price_at_purchase': item.price_at_purchase,
+                'subtotal': item.subtotal,
+            } for item in order_items]
+        }
+
+        return JsonResponse(response_data, status=200)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
 

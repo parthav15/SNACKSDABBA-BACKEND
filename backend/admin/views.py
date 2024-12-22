@@ -614,6 +614,15 @@ def list_orders(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
+        bearer = request.headers.get('Authorization')
+        
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication Header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_admin(token):
+            return JsonResponse({'success': False, 'message': 'Invalid Token.'}, status=401)
+        
         orders = Order.objects.all().values(
             'id',
             'user__first_name',
