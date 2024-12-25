@@ -4,6 +4,7 @@ from store.views import user_views, product_views, cart_views, wishlist_views, s
 urlpatterns = [
     # User Management URLs
     path('user_register/', user_views.user_register, name='register'),
+    path('activate_email/', user_views.activate_email, name='activate_email'),
     path('user_login/', user_views.user_login, name='login'),
     path('user_get_details/', user_views.user_get_details, name='user_get_details'),
     path('user_edit/', user_views.user_edit, name='user_edit'),

@@ -78,26 +78,28 @@ def user_register(request):
 
         encoded_token = jwt_encode(email)
 
-        # User.objects.create(
-        #     email=email,
-        #     username=username,
-        #     first_name=first_name,
-        #     last_name=last_name,
-        #     phone_number=phone_number,
-        #     password=hashed_password,
-        #     login_by=login_by,
-        #     is_customer=True,
-        #     profile_picture='profile_pictures/default.png'
-        #     )
+        User.objects.create(
+            email=email,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number,
+            password=hashed_password,
+            login_by=login_by,
+            is_customer=True,
+            profile_picture='profile_pictures/default.png'
+            )
         
         html_content = render_to_string('email_templates/verify_email.html', {
             'full_name': f'{first_name} {last_name}',
-            'action_url': f'{settings.BACKEND_URL}/activate_email?token={encoded_token}',
-            'logo_url': f'{settings.BACKEND_URL}/media/images/logo-ct.png',
+            'action_url': f'{settings.BACKEND_URL}api/activate_email/?token={encoded_token}',
+            'logo_url': f'{settings.BACKEND_URL}media/images/logo-ct.png',
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL
         })
 
         email_message = EmailMessage(
-            subject='Welcome to Snacks Dabba',
+            subject='Please verify your email',
             body=html_content,
             from_email=settings.EMAIL_HOST_USER,
             to=[email],
@@ -122,15 +124,26 @@ def activate_email(request):
     try:
         decoded_token = jwt_decode(token)
         user = User.objects.get(email=decoded_token['email'])
+        email = user.email
         
         user.is_email = True
         user.save()
 
         html_content = render_to_string('email_templates/activate_email.html', {
             'full_name': f'{user.first_name} {user.last_name}',
-            'logo_url': f'{settings.BACKEND_URL}/media/images/logo-ct.png',
+            'logo_url': f'{settings.BACKEND_URL}media/images/logo-ct.png',
             'action_url': {settings.FRONTEND_URL}
         })
+        
+        email_message = EmailMessage(
+            subject='Welcome to Snacks Dabba',
+            body=html_content,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[email],
+        )
+
+        email_message.content_subtype = 'html'
+        email_message.send(fail_silently=False)
 
         return redirect(settings.FRONTEND_URL)
     except User.DoesNotExist:
