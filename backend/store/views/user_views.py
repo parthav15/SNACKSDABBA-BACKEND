@@ -1,10 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
 
 from store.models import User
 
@@ -76,25 +78,66 @@ def user_register(request):
 
         encoded_token = jwt_encode(email)
 
-        User.objects.create(
-            email=email,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            phone_number=phone_number,
-            password=hashed_password,
-            login_by=login_by,
-            is_customer=True,
-            profile_picture='profile_pictures/default.png'
-            )
+        # User.objects.create(
+        #     email=email,
+        #     username=username,
+        #     first_name=first_name,
+        #     last_name=last_name,
+        #     phone_number=phone_number,
+        #     password=hashed_password,
+        #     login_by=login_by,
+        #     is_customer=True,
+        #     profile_picture='profile_pictures/default.png'
+        #     )
+        
+        html_content = render_to_string('email_templates/verify_email.html', {
+            'full_name': f'{first_name} {last_name}',
+            'action_url': f'{settings.BACKEND_URL}/activate_email?token={encoded_token}',
+            'logo_url': f'{settings.BACKEND_URL}/media/images/logo-ct.png',
+        })
 
-        return JsonResponse({'success': True, 'message': 'User Registered Successfully.', 'token': encoded_token}, status=201)
+        email_message = EmailMessage(
+            subject='Welcome to Snacks Dabba',
+            body=html_content,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[email],
+        )
+
+        email_message.content_subtype = 'html'
+        email_message.send(fail_silently=False)
+
+        return JsonResponse({'success': True, 'message': 'A confirmation Email has been sent, Please verify the email to complete registration.', 'token': encoded_token}, status=201)
     
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Invlaid JSON in request body.'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
+@csrf_exempt
+def activate_email(request):
+    token = request.GET.get('token')
+    if not token:
+        return JsonResponse({'success': False, 'message': 'Token is required.'}, status=400)
+    
+    try:
+        decoded_token = jwt_decode(token)
+        user = User.objects.get(email=decoded_token['email'])
+        
+        user.is_email = True
+        user.save()
+
+        html_content = render_to_string('email_templates/activate_email.html', {
+            'full_name': f'{user.first_name} {user.last_name}',
+            'logo_url': f'{settings.BACKEND_URL}/media/images/logo-ct.png',
+            'action_url': {settings.FRONTEND_URL}
+        })
+
+        return redirect(settings.FRONTEND_URL)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+
 @csrf_exempt
 def user_login(request):
     if request.method != 'POST':
