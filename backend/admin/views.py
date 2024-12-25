@@ -190,6 +190,7 @@ def user_detail(request):
                         "id": item.id,
                         "product": item.product.name,
                         "quantity": item.quantity,
+                        "price": item.product.price,
                     }
                     for item in user.carts.first().cart_items.all()
                 ] if user.carts.exists() else [],
