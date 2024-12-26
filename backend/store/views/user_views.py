@@ -171,6 +171,22 @@ def user_login(request):
             if user.is_customer:
                 login(request, user)
                 token = jwt_encode(user.email)
+
+                html_content = render_to_string('email_templates/activate_email.html', {
+                    'full_name': f'{user.first_name} {user.last_name}',
+                    'logo_url': f'{settings.BACKEND_URL}media/images/logo-ct.png',
+                    'action_url': {settings.FRONTEND_URL}
+                })
+                
+                email_message = EmailMessage(
+                    subject='Welcome back to Snacks Dabba',
+                    body=html_content,
+                    from_email=settings.EMAIL_HOST_USER,
+                    to=[email],
+                )
+
+                email_message.content_subtype = 'html'
+                email_message.send(fail_silently=False)
                 return JsonResponse({'success': True, 'message': 'Login Successful.', 'token': token}, status=200)
             else:
                 return JsonResponse({'success': False, 'message': 'User is not a customer.'}, status=400)
