@@ -219,6 +219,52 @@ def add_item_to_cart(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
 @csrf_exempt
+def remove_item_from_cart(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        bearer = request.headers.get('Authorization')
+
+        if not bearer:
+            return JsonResponse({'success': False, 'message': 'Authentication header is required.'}, status=401)
+        
+        token = bearer.split()[1]
+        if not auth_customer(token):
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        decoded_token = jwt_decode(token)
+        user_email = decoded_token.get('email')
+
+        if not user_email:
+            return JsonResponse({'success': False, 'message': 'Invalid token data.'}, status=401)
+        
+        user = User.objects.get(email__iexact=user_email)
+
+        cart = Cart.objects.get(user=user)
+
+        product_id = request.POST.get('product_id')
+
+        if not product_id:
+            return JsonResponse({'success': False, 'message': 'Product ID is required.'}, status=400)
+        
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+        
+        try:
+            cart_item = CartItem.objects.get(cart=cart, product=product)
+            cart_item.delete()
+            return JsonResponse({'success': True, 'message': 'Item removed from cart successfully.'}, status=200)
+        except CartItem.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Item not found in cart.', 'product': product.name}, status=404)
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+        
+    
+@csrf_exempt
 def get_cart_items(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
