@@ -344,8 +344,8 @@ def update_product(request):
         product.discount_price = request.POST.get('discount_price', product.discount_price).strip()
         product.video_url = request.POST.get('video_url', product.video_url).strip()
         product.attributes = request.POST.get('attributes', product.attributes)
-        product.is_featured = request.POST.get('is_featured', product.is_featured) == 'True'
-        product.rating = request.POST.get('rating', product.rating)
+        product.is_featured = request.POST.get('is_featured', 'false').strip().lower() == 'true'
+        product.rating = float(request.POST.get('rating', product.rating))
         product.brand = request.POST.get('brand', product.brand).strip()
         product.stock = request.POST.get('stock', product.stock).strip()
         product.category_id = request.POST.get('category_id', product.category_id).strip()
@@ -360,7 +360,7 @@ def update_product(request):
         product.save()
         
         return JsonResponse({'success': True, 'message': 'Product updated successfully.', 'product_id': product.id}, status=200)
- 
+
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
