@@ -8,7 +8,7 @@ from django.core.files.storage import default_storage
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
 
-from store.models import User
+from store.models import User, Cart
 
 import string
 import random
@@ -78,7 +78,7 @@ def user_register(request):
 
         encoded_token = jwt_encode(email)
 
-        User.objects.create(
+        user = User.objects.create(
             email=email,
             username=username,
             first_name=first_name,
@@ -88,7 +88,9 @@ def user_register(request):
             login_by=login_by,
             is_customer=True,
             profile_picture='profile_pictures/default.png'
-            )
+        )
+
+        Cart.objects.create(user=user)
         
         html_content = render_to_string('email_templates/verify_email.html', {
             'full_name': f'{first_name} {last_name}',
@@ -111,7 +113,7 @@ def user_register(request):
         return JsonResponse({'success': True, 'message': 'A confirmation Email has been sent, Please verify the email to complete registration.', 'token': encoded_token}, status=201)
     
     except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'message': 'Invlaid JSON in request body.'}, status=400)
+        return JsonResponse({'success': False, 'message': 'Invalid JSON in request body.'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
     
