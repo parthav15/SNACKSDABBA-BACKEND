@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 from django.db.models import Q
+from django.core.paginator import Paginator
 
 from store.models import User, Product
 from store.views.user_views import jwt_encode, jwt_decode, auth_customer
@@ -216,6 +217,12 @@ def get_products_by_latest(request):
     try:
         products = Product.objects.all().order_by("-created_at")[:10]
 
+        page_number = request.POST.get('page', 1)
+
+        paginator = Paginator(products, 20)
+
+        page = paginator.page(page_number)
+
         products_list = []
         for product in products:
             products_list.append({
@@ -236,7 +243,17 @@ def get_products_by_latest(request):
                 'meta_description': product.meta_description
             })
 
-        return JsonResponse({'success': True, 'message': 'Products retrieved successfully.', 'products': products_list}, status=200)
+        pagination_metadata = {
+            'has_previous': page.has_previous(),
+            'has_next': page.has_next(),
+            'previous_page_number': page.previous_page_number() if page.has_previous() else None,
+            'next_page_number': page.next_page_number() if page.has_next() else None,
+            'page_number': page.number,
+            'num_pages': paginator.num_pages,
+            'count': paginator.count
+        }
+
+        return JsonResponse({'success': True, 'message': 'Products retrieved successfully.', 'products': products_list, 'pagination': pagination_metadata}, status=200)
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
 
