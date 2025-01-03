@@ -214,7 +214,7 @@ def get_products_by_latest(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
-        products = Product.objects.all().order_by("-created_at")[:10]
+        products = Product.objects.all().order_by("-created_at")
 
         products_list = []
         for product in products:

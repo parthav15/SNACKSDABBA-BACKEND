@@ -493,7 +493,7 @@ def update_category(request, category_id):
         
         name = request.POST.get('name', category.name).strip()
         description = request.POST.get('description', category.description).strip()
-        image = request.POST.get('image', category.image)
+        image = request.FILES.get('image', category.image)
         
         category.name = name
         category.description = description
