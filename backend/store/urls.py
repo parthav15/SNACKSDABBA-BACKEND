@@ -18,6 +18,7 @@ urlpatterns = [
     path('get_product/<int:product_id>/', product_views.get_product, name='get_product'),
     path('get_products_by_category/<int:category_id>/', product_views.get_products_by_category, name='get_product_by_category'),
     path('get_products_by_featured/', product_views.get_products_by_featured, name='get_products_by_featured'),
+    path('get_brand_names/', product_views.get_brand_names, name='get_brand_names'),
     path('get_products_by_brand/', product_views.get_products_by_brand, name='get_products_by_brand'),
     path('get_products_by_latest/', product_views.get_products_by_latest, name='get_products_by_latest'),    
     path('get_discounted_products/', product_views.get_discounted_products, name='get_discounted_products'),

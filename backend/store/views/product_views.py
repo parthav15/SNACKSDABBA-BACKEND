@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.core.files.storage import default_storage
 from django.db.models import Q
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 from store.models import User, Product
 from store.views.user_views import jwt_encode, jwt_decode, auth_customer
@@ -115,26 +115,65 @@ def get_products_by_featured(request):
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
-        products = Product.objects.filter(is_featured=True).values(
-            'id', 
-            'name', 
-            'description', 
-            'price', 
-            'discount_price',
-            'stock', 
-            'category__name', 
-            'image',
-            'video_url',
-            'attributes',
-            'is_featured',
-            'rating',
-            'brand',
-            'meta_keywords',
-            'meta_description'
-        )
-        products_list = list(products)
+        page = int(request.POST.get('page', 1))
+        paginator = Paginator(Product.objects.filter(is_featured=True).order_by("-created_at"), 10)
         
-        return JsonResponse({'success': True, 'message': 'Featured products retrieved successfully.', 'products': products_list}, status=200)
+        try:
+            products = paginator.page(page)
+        except PageNotAnInteger:
+            return JsonResponse({'success': False, 'message': 'Invalid page.'}, status=400)
+        except EmptyPage:
+            return JsonResponse({'success': False, 'message': 'No more products.'}, status=404)
+        
+        products_list = []
+        for product in products:
+            products_list.append({
+                'id': product.id,
+                'name': product.name,
+                'description': product.description,
+                'price': product.price,
+                'discount_price': product.discount_price,
+                'stock': product.stock,
+                'category': product.category.name,
+                'image': product.image,
+                'video_url': product.video_url,
+                'attributes': product.attributes,
+                'is_featured': product.is_featured,
+                'rating': product.rating,
+                'brand': product.brand,
+                'meta_keywords': product.meta_keywords,
+                'meta_description': product.meta_description
+            })
+        
+        total_pages = paginator.num_pages
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Featured products retrieved successfully.',
+            'products': products_list,
+            'pagination': {
+                'page': page,
+                'total_pages': total_pages,
+                'has_next': page < total_pages,
+                'has_previous': page > 1,
+            }
+        }, status=200)
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
+    
+@csrf_exempt
+def get_brand_names(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
+    
+    try:
+        brand_names = Product.objects.values_list('brand', flat=True).distinct()
+        brand_names_list = list(brand_names)
+        
+        return JsonResponse({'success': True, 'message': 'Brand names retrieved successfully.', 'brand_names': brand_names_list}, status=200)
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Product not found.'}, status=404)
     
@@ -142,12 +181,16 @@ def get_products_by_featured(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=400)
 
 @csrf_exempt
-def get_products_by_brand(request, brand_id):
+def get_products_by_brand(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method. Use POST.'}, status=405)
     
     try:
-        products = Product.objects.filter(brand_id=brand_id).values(
+        brand = request.POST.get('brand')
+        if not brand:
+            return JsonResponse({'success': False, 'message': 'Brand is required.'}, status=400)
+        
+        products = Product.objects.filter(brand=brand).values(
             'id', 
             'name', 
             'description', 
