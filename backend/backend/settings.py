@@ -101,9 +101,8 @@ BACKEND_URL = 'https://adef-2401-4900-1c34-5fc1-6d67-4f97-407d-c1a7.ngrok-free.a
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'staticfiles'),
-]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
