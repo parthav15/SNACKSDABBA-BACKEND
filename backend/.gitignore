@@ -1,1 +1,7 @@
-.vercel
+/.venv
+__pycache__/
+*.pyc
+backend/media/
+backend/backend/settings.py
+/venv
+backend/db.sqlite3
